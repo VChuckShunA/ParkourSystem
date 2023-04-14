@@ -26,7 +26,10 @@ public:
 	//bool CanGrab(bool canGrabBL);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Parkour")
-	bool CanGrab(bool canGrabBL);
+	void CanGrab(bool canGrabBL);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Parkour")
+		void ClimbLedge(bool isClimbing);
 
 	
 };

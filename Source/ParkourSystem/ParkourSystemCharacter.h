@@ -40,8 +40,7 @@ public:
 
 	FVector WallNormal;
 	FVector WallLocation;
-		FVector HeightLocation;
-
+	FVector HeightLocation;
 protected:
 
 	/** Resets HMD orientation in VR. */
@@ -78,9 +77,14 @@ protected:
 	//Hieght Trace for line tracing
 	void HeightTracer();
 
+	void HandleJump();
+
 public:
 	UFUNCTION(BlueprintCallable, Category = Parkour)
 		void GrabLedge();
+	UFUNCTION(BlueprintCallable, Category = Parkour)
+		void ExitLedge();
+
 
 protected:
 	// APawn interface
@@ -95,6 +99,11 @@ public:
 
 	
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Parkour")
-	bool CanGrab_Implementation(bool canGrabBL);
+	void CanGrab(bool canGrabBL);
+	void CanGrab_Implementation(bool canGrabBL);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Parkour")
+		void ClimbLedge(bool isClimbing);
+	void ClimbLedge_Implementation(bool isClimbing);
 };
 

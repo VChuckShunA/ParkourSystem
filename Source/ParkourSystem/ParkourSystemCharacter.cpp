@@ -10,6 +10,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Kismet/GameplayStatics.h" 
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
 #include "Math/Vector.h"
@@ -65,7 +66,8 @@ void AParkourSystemCharacter::SetupPlayerInputComponent(class UInputComponent* P
 {
 	// Set up gameplay key bindings
 	check(PlayerInputComponent);
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &AParkourSystemCharacter::HandleJump);
+	//PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	PlayerInputComponent->BindAxis("MoveForward", this, &AParkourSystemCharacter::MoveForward);
@@ -85,11 +87,26 @@ void AParkourSystemCharacter::SetupPlayerInputComponent(class UInputComponent* P
 
 	// VR headset functionality
 	PlayerInputComponent->BindAction("ResetVR", IE_Pressed, this, &AParkourSystemCharacter::OnResetVR);
+
+
+	PlayerInputComponent->BindAction("SKey", IE_Pressed, this, &AParkourSystemCharacter::ExitLedge);
 }
 
-bool AParkourSystemCharacter::CanGrab_Implementation(bool canGrabBL)
+void AParkourSystemCharacter::CanGrab_Implementation(bool canGrabBL)
 {
-	return canGrabBL;;
+	
+}
+
+void AParkourSystemCharacter::ClimbLedge_Implementation(bool isClimbing)
+{
+	if (!IsClimbingLedge)
+	{
+		IParkourInterface::Execute_ClimbLedge(this,true);
+		GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
+		IsClimbingLedge = true;
+		IsHanging = false;
+	}
+
 }
 
 
@@ -183,17 +200,29 @@ void AParkourSystemCharacter::HeightTracer()
 	}
 }
 
+void AParkourSystemCharacter::HandleJump()
+{
+	if (IsHanging)
+	{
+
+		//IParkourInterface::Execute_ClimbLedge(this,true);
+	}
+	else
+	{
+		Jump();
+	}
+}
+
+
 void AParkourSystemCharacter::GrabLedge()
 {
-	//IParkourInterface* ParkourAnimInstance = Cast<IParkourInterface>(GetMesh()->GetAnimInstance());
-	//IParkourInterface::Execute_CanGrab(GetMesh()->GetAnimInstance(),true);
-
+	IParkourInterface::Execute_CanGrab(GetMesh()->GetAnimInstance(),true);
 	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Flying);
 	IsHanging = true;
 	FLatentActionInfo LatentInfo;
 	LatentInfo.CallbackTarget = this;
 	FTimerHandle TimerHandle;
-	FVector TargetLocation=FVector(WallNormal.X * 20 + WallLocation.X, WallNormal.Y * 20 + WallLocation.Y, HeightLocation.Z - 120);
+	FVector TargetLocation=FVector(WallNormal.X * 22 + WallLocation.X, WallNormal.Y * 22 + WallLocation.Y, HeightLocation.Z - 135);
 	FRotator TargetRotation = FRotator(WallNormal.X,WallNormal.Y,WallNormal.Z);
 	UKismetSystemLibrary::MoveComponentTo(GetCapsuleComponent(), TargetLocation,
 	TargetRotation, false, false,  0.13f,false,EMoveComponentAction::Move, LatentInfo);
@@ -207,6 +236,15 @@ void AParkourSystemCharacter::GrabLedge()
 	GetCharacterMovement()->StopMovementImmediately();
 	
 }
+
+void AParkourSystemCharacter::ExitLedge()
+{
+	GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+	IParkourInterface::Execute_CanGrab(GetMesh()->GetAnimInstance(), false);
+	IsHanging = false;
+}
+
+
 
 void AParkourSystemCharacter::TurnAtRate(float Rate)
 {
